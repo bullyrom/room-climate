@@ -1,4 +1,5 @@
 # Release notes
+- ci: add a GitHub Actions release workflow that builds the ESP32 images and Python binaries on `v*` tags and attaches them to a GitHub Release
 - docs: rewrite README for public use (ESP32 + MH-Z19C overview, build/flash/run, Security / limitations)
 - chore: add the MIT `LICENSE` (Copyright room-climate contributors)
 - docs: rewrite README/AGENTS/map and drop infrastructure-specific paths and workflow for public release

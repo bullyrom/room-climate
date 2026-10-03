@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build firmware and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install espflash
+        run: cargo install espflash --locked
+
+      - name: Install the Xtensa Rust toolchain
+        uses: esp-rs/xtensa-toolchain@v1.5
+        with:
+          default: true
+          buildtargets: esp32
+          ldproxy: false
+
+      - name: Build the ESP32 firmware and merged image
+        working-directory: firmware
+        run: |
+          mkdir -p ../artifacts
+          cargo build -p esp32-firmware --release --target xtensa-esp32-none-elf
+          espflash save-image --chip esp32 --merge \
+            target/xtensa-esp32-none-elf/release/room-climate-firmware \
+            ../artifacts/room-climate-firmware.bin
+
+      - name: Build the app-only image
+        working-directory: firmware
+        run: |
+          python3 -m pip install --upgrade esptool
+          python3 -m esptool --chip esp32 elf2image --output \
+            ../artifacts/room-climate-firmware-app.bin \
+            target/xtensa-esp32-none-elf/release/room-climate-firmware
+
+      - name: Build the standalone Python binaries (optional)
+        continue-on-error: true
+        run: |
+          python3 -m pip install --upgrade uv
+          python3 binary_builder.py
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          files: artifacts/*
+          fail_on_unmatched_files: false
