@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "room-climate"
+version = "0.1.0"
+description = "Room climate monitoring: CO2, temperature and sensor calibration"
+authors = ["room-climate contributors"]
+readme = "README.md"
+packages = [{ include = "room_climate" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyserial = "^3.5"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+black = "^24.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

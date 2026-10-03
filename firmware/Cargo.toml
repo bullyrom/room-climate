@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["mh_z19_protocol", "esp32_firmware"]
+
+[profile.release]
+opt-level = "s"
+lto = true

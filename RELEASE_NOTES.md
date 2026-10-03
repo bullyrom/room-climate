@@ -1,0 +1,57 @@
+# Release notes
+- docs: rewrite README for public use (ESP32 + MH-Z19C overview, build/flash/run, Security / limitations)
+- chore: add the MIT `LICENSE` (Copyright room-climate contributors)
+- docs: rewrite README/AGENTS/map and drop infrastructure-specific paths and workflow for public release
+- fix: let `binary_builder.py` publish to a configurable `ARTIFACT_DIR` (default `artifacts/`) instead of a fixed absolute path
+- chore: remove private examples (real SSID, author email, example IP addresses) and the internal task log
+- feat: add CO2 sensor identification, liveness diagnosis and calibration pipeline
+- feat: add `calibrate.py` CLI for identifying, diagnosing and calibrating an MH-Z19 sensor
+- refactor: port the realtime chart to a class-based `room_climate` package
+- test: add protocol, liveness and calibration pipeline tests
+- feat: add `diagnose.py` liveness diagnostic with console + log-file output
+- feat: add `binary_builder.py` publishing the `mh_z19_liveness` binary to the artifact directory
+- docs: document the user-side binary + log round-trip workflow
+- fix: build `mh_z19_liveness` with a uv-managed glibc-2.17 Python so it starts on the user's older machine
+- feat: add `mh_z19_calibrate` binary with zero-point calibration and ABC control
+- refactor: reuse one `DiagnosticLogger` for the liveness and calibration outputs
+- feat: write a separate timestamped log file per liveness/calibration run
+- fix: guarantee console output and a log file (StartupGuard, startup banner, `--list-ports`, temp-dir log fallback)
+- chore: add `room-climate.sh` and document the commit → run → read-logs workflow
+- feat: add `mh_z19_monitor` for long-term CO2/temperature logging; `room-climate.sh` starts it
+- docs: roadmap for the Xiaomi LYWSD03MMC (BLE) second sensor and thresholds
+- fix: flush+fsync every log record so a long run's log is durable even while the file is open
+- feat: add Rust ESP32 firmware sources (MH-Z19C UART, serial) and `room-climate.sh flash`
+- refactor: cut firmware scope to CO2-over-USB only (no I2C sensor, no Wi-Fi yet)
+- build: compile and publish `room-climate-firmware.bin` to the artifact directory
+- feat: bundle a static `espflash` and add `room-climate.sh flash` / `room-climate.sh serial` (no installs)
+- fix: publish a merged ESP32 image and flash it at `0x0` so a clean board works in one command
+- fix: auto-pick the flash offset (merged image at `0x0`, app-only at `0x10000`) to avoid out-of-flash writes
+- fix: publish `room-climate.sh` from the builder and refresh artifact mtimes so it is always rebuilt current
+- fix: open the MH-Z19 UART at 9600 baud and print the boot banner before peripheral init
+- feat: log raw MH-Z19 command/response bytes and UART errors, with a bounded receive timeout, for on-the-wire diagnostics
+- docs: explain the diagnostic output and the clone 5V level-shifter caveat
+- feat: Wi-Fi station firmware with credential provisioning over USB serial and storage in the flash nvs partition
+- feat: `room-climate.sh wifi` sends SSID/password to the device with hidden password input and no logging
+- docs: document Wi-Fi provisioning, the radio blob and the credential record layout
+- refactor: drop the legacy realtime console chart (`main.py`, `Co2Monitor`/`Co2Chart`/`MonitorCli`/`AirQuality`) and the `asciichartpy` dependency; keep the liveness/calibrate/monitor diagnostics and the protocol/transport
+- feat: keep the serial console clean by default; the raw MH-Z19 command/response bytes and UART errors are now compiled in only with the `mhz19-debug` cargo feature
+- refactor: rename `run.sh` to `room-climate.sh` (repository and artifact directory) so it is not confused with another project's script
+- fix: `room-climate.sh wifi` keeps a single serial open, waits for the device provisioning prompt and for the `credentials saved` confirmation (the port open resets the ESP32, which previously dropped the credentials)
+- fix: verify the Wi-Fi credential record by reading it back from flash before reporting success
+- fix: add a pyserial-based `mh_z19_provision` binary that resets the ESP32 via DTR/RTS, waits for the firmware prompt and confirms the save; `room-climate.sh wifi` uses it (bash `stty`/`printf` cannot control the reset lines reliably)
+- fix: connect the UART0 console RX pin (GPIO3) explicitly so the firmware actually receives the `wifi`/`pass` provisioning lines (it only printed before)
+- fix: credential save ran with interrupts enabled and with the other core live; enable `esp-storage/critical-section` and auto-park the second core
+- fix: fat LTO silently deleted the whole credential-save path on Xtensa; build the firmware with thin LTO
+- feat: write the nvs record with an explicit sector erase plus aligned `write_nor`/`read_nor` (no 4 KiB stack buffer), and print the exact save failure reason
+- fix: make the provisioner's serial reader tolerant of non-UTF-8/noise bytes (hex-logged, latin-1 fallback) so it cannot crash on garbage
+- fix: the credential pair was never completed because `collect` unconditionally `take()`-ed both `Option`s each iteration, so provisioning never returned; only take them when both are present (the earlier "fat LTO" diagnosis was a symptom of this, not the cause — `lto = true` is restored)
+- feat: flash write self-test at start-up (`flash selftest: ok`) and per-step save logging (`nvs erase/write/readback ok`) so a failure point is always visible
+- feat: HTTP server on port 80 (`embassy-net` + DHCP) serving the latest reading as `{"co2":<ppm>,"temp":<C>}` on `GET /`; Wi-Fi, MH-Z19 sampling and HTTP are separate async tasks and the DHCP address is printed at boot
+- feat: `room-climate.sh update` writes only the app image at `0x10000` so firmware updates keep the saved Wi-Fi credentials; the merged `flash` image covers the whole flash (including `nvs` at `0x9000`) and erases them
+- fix: write every serial log line atomically (format the full line, then one `Printer::write_bytes` under esp-println's critical section) so concurrent tasks cannot interleave output and hide `wifi: credentials saved`
+- chore: wipe and republish the artifact directory with the current room-climate artifacts
+- fix: initialise the heap before anything allocates and grow it to 128 KiB; make the atomic console use a fixed stack buffer and build the HTTP response without `alloc`, so logging/requests can never fail on OOM (the 42-byte banner previously allocated before `heap_allocator!` ran)
+- fix: serialise whole console lines across cores with a global `esp-sync` spinlock (a critical section only masks the current core), so lines from different tasks can no longer interleave (`http: serving on ...=29C`)
+- fix: route the HTTP task's console output through the cross-core atomic logger (it still used `esp_println::println!` and could interleave)
+- fix: confirm Wi-Fi provisioning by fact — reboot the chip and read the `stored credentials found for ssid=...` boot line from flash — instead of matching the `credentials saved` console line, so interleaved/lost output can no longer cause a false "device did not confirm"
+- feat: include the SSID in the firmware's `credentials saved` line and expose `--verify-timeout` on `mh_z19_provision`

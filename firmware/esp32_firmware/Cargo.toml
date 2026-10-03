@@ -1,0 +1,45 @@
+[package]
+name = "esp32-firmware"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "room-climate-firmware"
+path = "src/main.rs"
+
+[features]
+default = []
+# Print the raw MH-Z19 command/response bytes and UART errors to the serial
+# console. Off by default so the normal output stays clean.
+mhz19-debug = []
+
+[dependencies]
+embedded-io = "0.7"
+mh_z19_protocol = { path = "../mh_z19_protocol" }
+
+# Versions below target esp-rs 1.x; run `cargo add` to pin the exact latest
+# release that matches your installed espup toolchain.
+esp-hal = { version = "1.2", features = ["esp32", "unstable"] }
+esp-println = { version = "0.13", features = ["esp32"] }
+esp-backtrace = { version = "0.15", features = ["esp32", "panic-handler", "println"] }
+esp-bootloader-esp-idf = { version = "0.6", features = ["esp32"] }
+# Enable esp-storage's interrupt-free flash access. esp-bootloader builds
+# esp-storage with `default-features = false`, which drops `critical-section`;
+# without it the flash erase/write runs with interrupts enabled and both cores
+# live, which can fault while the ROM has the flash cache disabled.
+esp-storage = { version = "0.10", default-features = false, features = ["esp32", "critical-section"] }
+
+# Wi-Fi stack. `esp-radio` links Espressif's precompiled radio blob
+# (libnet80211.a / libpp.a / libcore.a); it is linked into the image and runs
+# only on the chip. `esp-rtos` provides the scheduler esp-radio requires.
+esp-radio = { version = "1.0.0-beta.1", features = ["wifi", "esp32"] }
+esp-rtos = { version = "0.4.0", features = ["embassy", "esp-radio", "esp32"] }
+esp-alloc = { version = "0.11", features = ["esp32"] }
+embassy-executor = "0.10"
+
+# TCP/IP stack on top of the esp-radio Wi-Fi interface, and a small HTTP server.
+embassy-net = { version = "0.9", default-features = false, features = ["dhcpv4", "medium-ethernet", "tcp"] }
+embassy-time = "0.5"
+static_cell = "2"
+# Cross-core spinlock for the console (critical sections are per-core).
+esp-sync = "0.3"

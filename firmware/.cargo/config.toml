@@ -1,0 +1,8 @@
+# Build with: cargo build -p esp32-firmware --release --target xtensa-esp32-none-elf
+[target.xtensa-esp32-none-elf]
+rustflags = ["-C", "link-arg=-Tlinkall.x"]
+runner = "espflash flash --monitor"
+
+# Xtensa targets have no precompiled core, so build it from rust-src.
+[unstable]
+build-std = ["core", "alloc"]
