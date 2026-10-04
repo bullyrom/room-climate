@@ -4,8 +4,8 @@ Firmware for the room-climate node. ESP32 powered over USB, one **MH-Z19C CO2**
 sensor on UART, measurements printed to the USB serial console, a **Wi-Fi
 station** connection whose credentials are provisioned over that same USB
 serial console, and an **HTTP server** that serves the latest CO2/temperature
-reading as JSON on port 80. The I2C temperature/humidity sensor is a future
-stage.
+reading as JSON on port 80. An onboard I2C temperature/humidity sensor
+(AHT20/SHT31) for a single self-contained device is a future stage.
 
 The Wi-Fi stack links Espressif's precompiled radio blob (`libnet80211.a`,
 `libpp.a`, `libcore.a`). It is only linked into the image and executes solely on

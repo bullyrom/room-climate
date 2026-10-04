@@ -284,8 +284,10 @@ The code follows a one-class-per-file pipeline architecture; see
 
 ## Roadmap
 
-- Second sensor: Xiaomi LYWSD03MMC (temperature/humidity over BLE), merged with
-  the MH-Z19 readings into one timestamped record.
+- Add an **onboard temperature sensor** so the node is a single self-contained
+  device (ESP32 + MH-Z19C + temperature sensor), for example an I2C AHT20/SHT31.
+  Merge its reading with the MH-Z19C measurement in the JSON endpoint and the
+  logs.
 - Configurable threshold rules and notifications (ventilate when CO2 is high,
   warn when temperature or humidity leaves a comfortable band).
 

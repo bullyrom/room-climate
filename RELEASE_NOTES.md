@@ -1,4 +1,5 @@
 # Release notes
+- docs: roadmap now targets an onboard I2C temperature sensor for a single self-contained device
 - ci: add a GitHub Actions release workflow that builds the ESP32 images and Python binaries on `v*` tags and attaches them to a GitHub Release
 - docs: rewrite README for public use (ESP32 + MH-Z19C overview, build/flash/run, Security / limitations)
 - chore: add the MIT `LICENSE` (Copyright room-climate contributors)
@@ -19,7 +20,7 @@
 - fix: guarantee console output and a log file (StartupGuard, startup banner, `--list-ports`, temp-dir log fallback)
 - chore: add `room-climate.sh` and document the commit → run → read-logs workflow
 - feat: add `mh_z19_monitor` for long-term CO2/temperature logging; `room-climate.sh` starts it
-- docs: roadmap for the Xiaomi LYWSD03MMC (BLE) second sensor and thresholds
+- docs: roadmap for an onboard temperature sensor and thresholds
 - fix: flush+fsync every log record so a long run's log is durable even while the file is open
 - feat: add Rust ESP32 firmware sources (MH-Z19C UART, serial) and `room-climate.sh flash`
 - refactor: cut firmware scope to CO2-over-USB only (no I2C sensor, no Wi-Fi yet)
