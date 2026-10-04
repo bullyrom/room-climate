@@ -1,4 +1,5 @@
 # Release notes
+- docs: add an "Install from a prebuilt release" section (download, flash at 0x0, provision, verify) to the README
 - docs: roadmap now targets an onboard I2C temperature sensor for a single self-contained device
 - ci: add a GitHub Actions release workflow that builds the ESP32 images and Python binaries on `v*` tags and attaches them to a GitHub Release
 - docs: rewrite README for public use (ESP32 + MH-Z19C overview, build/flash/run, Security / limitations)

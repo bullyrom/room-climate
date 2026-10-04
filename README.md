@@ -29,6 +29,65 @@ Room climate monitoring around the Winsen MH-Z19C CO2 sensor, in two parts:
 
 - For the Python tools: an MH-Z19B/C on a USB-UART adapter (e.g. CH340/FT232).
 
+## Install from a prebuilt release
+
+If you just want to use the device, download a ready build from the
+[releases page](https://github.com/bullyrom/room-climate/releases) instead of
+compiling. A release contains the flashable firmware image, so **no Rust/esp-rs
+toolchain, no `cargo` and no `espup` are needed**. Building from source (next
+section) is for development or custom changes and does require that toolchain.
+
+1. Download `room-climate-firmware.bin`, plus `room-climate.sh` and
+   `mh_z19_provision` if you want the helper scripts.
+2. Flash the merged image to a clean ESP32 at offset **`0x0`** with `esptool` or
+   `espflash`:
+
+   ```bash
+   # esptool
+   esptool --chip esp32 --port /dev/ttyUSB0 write_flash 0x0 room-climate-firmware.bin
+
+   # espflash
+   espflash write-bin --port /dev/ttyUSB0 0x0 room-climate-firmware.bin
+   ```
+
+   Or use a browser-based ESP web flasher (for example
+   [ESP Web Tools](https://esphome.github.io/esp-web-tools/)) and write the
+   merged image at offset `0x0`.
+3. Provision Wi-Fi over the USB serial console (the first boot prints a prompt):
+
+   ```bash
+   ./room-climate.sh wifi      # SSID typed, password hidden
+   # or watch the console and enter the two provisioning lines by hand:
+   ./room-climate.sh serial
+   ```
+4. Read the address the firmware prints and check the endpoint:
+
+   ```bash
+   curl http://<device-ip>/
+   # {"co2":812,"temp":22}
+   ```
+
+Put the downloaded assets in one directory and run `./room-climate.sh ...` from
+there (`BIN_DIR` defaults to the script's own directory).
+
+### What is in a release
+
+- `room-climate-firmware.bin` — merged full image (bootloader + partition table
+  + application) padded to the whole 4 MiB flash; flash it at **`0x0`**. It
+  overwrites `nvs`, so it erases any saved Wi-Fi credentials.
+- `room-climate-firmware-app.bin` — application-only image; flash it at
+  **`0x10000`** to update an already-provisioned board and keep the saved Wi-Fi
+  credentials:
+
+  ```bash
+  esptool --chip esp32 --port /dev/ttyUSB0 write_flash 0x10000 room-climate-firmware-app.bin
+  ```
+
+- `room-climate.sh` — the flash/provision/monitor helper used above.
+- `mh_z19_liveness`, `mh_z19_calibrate`, `mh_z19_monitor`, `mh_z19_provision` —
+  standalone Python diagnostic binaries (Linux x86_64) that need no Python
+  installation; see the Python tools section below.
+
 ## ESP32 firmware
 
 Requires the esp-rs Xtensa toolchain:
